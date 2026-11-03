@@ -31,7 +31,7 @@ namespace Gym_Core.Services
 
 
 
-        public async Task<AuthResponseDTO> LoginAsync(AuthLoginDTO model)
+        public async Task<AuthLoginResponseDTO> LoginAsync(AuthLoginDTO model)
         {
             var user = await userManager.FindByEmailAsync(model.Email);
             if (user is null)
@@ -44,7 +44,7 @@ namespace Gym_Core.Services
             var jwtToken = await jwt.GenerateJwtTokenAsync(user);
             var userRoles = await userManager.GetRolesAsync(user);
 
-            return new AuthResponseDTO()
+            return new AuthLoginResponseDTO()
             {
                 IsAuthenticated = true,
                 Email = user.Email!,

@@ -23,7 +23,7 @@ namespace Gym_Core.Services
             this.options = options.Value;
         }
 
-        public async Task<AuthResponseDTO> AddEmployee(AuthRegisterDTO model)
+        public async Task<AuthRegisterResponseDTO> AddEmployee(AuthRegisterDTO model)
         {
             if (await userManager.FindByEmailAsync(model.Email) is not null)
                 throw new ConflictException ("is email is already exist!" );
@@ -49,7 +49,7 @@ namespace Gym_Core.Services
                     errors.AppendLine(error.Description);
                 }
 
-                return new AuthResponseDTO()
+                return new AuthRegisterResponseDTO()
                 {
                     Message = errors.ToString()
                 };
@@ -57,7 +57,7 @@ namespace Gym_Core.Services
 
             await userManager.AddToRoleAsync(newUser, model.Role);
 
-            return new AuthResponseDTO()
+            return new AuthRegisterResponseDTO()
             {
                 IsAuthenticated = true,
                 Message = "User registered successfully!",

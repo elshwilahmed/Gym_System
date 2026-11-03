@@ -13,8 +13,8 @@ namespace Gym_Core.Models
         public int Id { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
-        public decimal PaidAmount { get; set; }
-        public int SessionsRemaining { get; set; }          
+        public decimal? PaidAmount { get; set; }
+        public int? SessionsRemaining { get; set; }          
         public DateTime CreatedAt { get; set; }
         public decimal RefundAmount { get; set; }
         public DateTime? CancelledAt { get; set; }

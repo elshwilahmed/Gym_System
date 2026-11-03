@@ -18,7 +18,7 @@ namespace Gym_Core.Interfaces
 
         Task<IEnumerable<Member>> GetMemberByPhoneOrNameAsync(string? searchTerm = null);
 
-        Task<Member> UpdateMember(int id, MemberRequestDTO memberDto);
+        Task<Member> UpdateMember(int id, MemberUpdateDTO memberDto);
         Task <Member> DeleteMember(int id);
     }
 }

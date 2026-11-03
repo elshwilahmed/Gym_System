@@ -187,7 +187,7 @@ namespace Gym_Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("DurationInDays")
+                    b.Property<int?>("DurationInDays")
                         .HasColumnType("int");
 
                     b.Property<bool>("IsActive")
@@ -197,11 +197,11 @@ namespace Gym_Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<decimal>("Price")
+                    b.Property<decimal?>("Price")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("SessionsCount")
+                    b.Property<int?>("SessionsCount")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -241,7 +241,7 @@ namespace Gym_Infrastructure.Migrations
                     b.Property<int>("MemberId")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("PaidAmount")
+                    b.Property<decimal?>("PaidAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
@@ -251,7 +251,7 @@ namespace Gym_Infrastructure.Migrations
                     b.Property<decimal>("RefundAmount")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("SessionsRemaining")
+                    b.Property<int?>("SessionsRemaining")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("StartDate")

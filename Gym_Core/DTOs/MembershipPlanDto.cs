@@ -13,13 +13,16 @@ namespace Gym_Core.DTOs
         public string Name { get; set; } = string.Empty;
 
         [Range(1, 3650)]
-        public int DurationInDays { get; set; }
+        [Required]
+        public int? DurationInDays { get; set; }
 
         [Range(0, 10000)]
-        public int SessionsCount { get; set; }
+        [Required]
+        public int? SessionsCount { get; set; }
 
         [Range(0, 1000000)]
-        public decimal Price { get; set; }
+        [Required]
+        public decimal? Price { get; set; }
 
         [MaxLength(500)]
         public string Description { get; set; } = string.Empty;

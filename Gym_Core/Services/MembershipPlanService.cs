@@ -8,6 +8,7 @@ using Gym_Core.DTOs;
 using Gym_Core.Exceptions;
 using Gym_Core.Interfaces;
 using Gym_Core.Models;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 
 namespace Gym_Core.Services                                  
 {
@@ -40,7 +41,17 @@ namespace Gym_Core.Services
         {
             var Exist = await unitOfWork.Plans.GetAsync(p => p.Name.Trim() == model.Name.Trim());
             if (Exist != null)
+            {
+                if(Exist.IsActive == false)
+                {
+                    Exist.IsActive = true;
+                    await unitOfWork.CompleteAsync();
+
+                    return MapToResponse(Exist);
+                }
+
                 throw new ConflictException("This plan is already exist!");
+            }
 
             var newPlan = new MembershipPlan
             {
@@ -91,7 +102,7 @@ namespace Gym_Core.Services
 
         }
 
-        public async Task<MembershipPlanResponseDto> UpdatePlanAsync(int id, MembershipPlanDto model)
+        public async Task<MembershipPlanResponseDto> UpdatePlanAsync(int id, MembershipPlanUpdateDTO model)
         {
             var Exist = await unitOfWork.Plans.GetAsync(p => p.Id == id);
             if (Exist == null)
@@ -99,11 +110,20 @@ namespace Gym_Core.Services
 
             if (await unitOfWork.Plans.GetAsync(p => p.Name == model.Name.Trim() && p.Id != id) != null)
                 throw new ConflictException("This plan name is already exist!");
-            
-            Exist.Name = model.Name.Trim();
-            Exist.SessionsCount = model.SessionsCount;
-            Exist.DurationInDays = model.DurationInDays;
-            Exist.Price = model.Price;
+
+            if (!string.IsNullOrWhiteSpace(model.Name))
+                Exist.Name = model.Name.Trim();
+
+            if (model.SessionsCount.HasValue)
+                Exist.SessionsCount = model.SessionsCount;
+
+            if(model.DurationInDays.HasValue)
+                Exist.DurationInDays = model.DurationInDays;
+
+            if(model.Price.HasValue)
+                Exist.Price = model.Price;
+
+            if(!string.IsNullOrEmpty(model.Description))
             Exist.Description = model.Description;
 
             await unitOfWork.CompleteAsync();

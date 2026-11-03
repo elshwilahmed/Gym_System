@@ -51,7 +51,7 @@ namespace Gym_System.Controllers
 
         [HttpPut]
         [Route("UpdateMember/{id:int}")]
-        public async Task<ActionResult> UpdateMember(int id, MemberRequestDTO memberDto)
+        public async Task<ActionResult> UpdateMember(int id, MemberUpdateDTO memberDto)
         {
             return Ok(APIResponse<Member>.Success(await memberService.UpdateMember(id, memberDto)));
         }

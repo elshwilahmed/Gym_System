@@ -9,11 +9,10 @@ namespace Gym_Core.DTOs
 {
     public class AttendanceReportQueryDto
     {
-        [Required]
-        public DateTime From { get; set; }
+ 
+        public DateTime? From { get; set; }
 
-        [Required]
-        public DateTime To { get; set; }
+        public DateTime? To { get; set; }
 
         public int? MemberId { get; set; }
     }

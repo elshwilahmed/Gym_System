@@ -10,17 +10,6 @@ namespace Gym_Core.Models
 {
     public class AppUser : IdentityUser<int>
     {
-        /*
-   {
-        "firstName": "Super",
-        "lastName": "Admin",
-        "userName": "super_admin",
-        "email": "admin@gym.com",
-        "password": "Password@2026",
-        "role": "Admin"
-   } 
-*/
-
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = String.Empty;
         [MaxLength(11), MinLength(11)]

@@ -25,9 +25,9 @@ namespace Gym_System.Controllers
             var res = await authService.LoginAsync(loginDTO);
 
             if (res.IsAuthenticated == false)
-                return BadRequest(APIResponse<AuthResponseDTO>.Failure(res.Message));
+                return BadRequest(APIResponse<AuthLoginResponseDTO>.Failure(res.Message));
 
-            return Ok(APIResponse<AuthResponseDTO>.Success(res));
+            return Ok(APIResponse<AuthLoginResponseDTO>.Success(res));
         }
     }
 }

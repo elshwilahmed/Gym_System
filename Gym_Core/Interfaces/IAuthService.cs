@@ -9,6 +9,6 @@ namespace Gym_Core.Interfaces
 {
     public interface IAuthService
     {
-        Task<AuthResponseDTO> LoginAsync(AuthLoginDTO model);
+        Task<AuthLoginResponseDTO> LoginAsync(AuthLoginDTO model);
     }
 }

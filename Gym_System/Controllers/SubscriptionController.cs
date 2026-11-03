@@ -10,6 +10,7 @@ namespace Gym_System.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin,Receptionist")]
     public class SubscriptionController : ControllerBase
     {
         private readonly ISubscriptionService subscriptionService;
@@ -30,7 +31,7 @@ namespace Gym_System.Controllers
                          "Subscription created successfully"));
         }
 
-        [HttpPut]
+        [HttpDelete]
         [Route("CancelSubscription/{id:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> CancelSubscription(int id, CancelSubscriptionDto dto)

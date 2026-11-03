@@ -20,8 +20,11 @@ namespace Gym_Core.DTOs
         public string UserName { get; set; } = string.Empty;
 
         [Required, StringLength(50)]
+        [EmailAddress(ErrorMessage = "Email must contain a . and @")]
+        [RegularExpression(@".*\..*", ErrorMessage = "Email must contain a . and @")]
         public string Email { get; set; } = string.Empty;
         [Required, StringLength(11)]
+        [RegularExpression(@"^01[0125]\d{8}$", ErrorMessage = "Invalid egyption phone")]
         public string Phone { get; set; } = string.Empty;
 
         [Required]

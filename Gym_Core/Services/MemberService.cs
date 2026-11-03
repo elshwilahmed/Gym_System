@@ -97,7 +97,7 @@ namespace Gym_Core.Services
                 return await GetAllMembersAsync(searchTerm);
             searchTerm = searchTerm.Trim();
 
-            var query = await unitOfWork.Members.GetAllAsync(m => m.Phone == searchTerm ||
+            var query = await unitOfWork.Members.GetAllAsync(m => m.Phone.Contains(searchTerm) ||
                                                                m.FullName.Contains(searchTerm));
             if (!query.Any())
                 throw new NotFoundException("This member is not found");
@@ -120,7 +120,7 @@ namespace Gym_Core.Services
             return query;
         }
 
-        public async Task<Member> UpdateMember(int id, MemberRequestDTO memberDto)
+        public async Task<Member> UpdateMember(int id, MemberUpdateDTO memberDto)
         {
             var existingMember = await unitOfWork.Members.GetAsync(m => m.Id == id);
 
@@ -148,7 +148,7 @@ namespace Gym_Core.Services
                 }
             }
 
-            if (memberDto.DateOfBirth is not null)
+            if (memberDto.DateOfBirth.HasValue)
                 existingMember.DateOfBirth = memberDto.DateOfBirth.Value;
 
             await unitOfWork.CompleteAsync();

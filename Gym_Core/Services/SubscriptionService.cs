@@ -79,7 +79,7 @@ namespace Gym_Core.Services
                 CreatorId = creatorId,        
                 PaidAmount = ExistingPlan.Price,
                 StartDate = today,
-                EndDate = today.AddDays(ExistingPlan.DurationInDays - 1),
+                EndDate = today.AddDays(ExistingPlan.DurationInDays!.Value - 1),
                 RefundAmount = 0,
                 SessionsRemaining = ExistingPlan.SessionsCount,
                 Status = SubscriptionStatus.Active,

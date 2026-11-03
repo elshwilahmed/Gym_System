@@ -46,7 +46,7 @@ namespace Gym_System.Controllers
         [HttpPut]
         [Route("UpdatePlan/{id:int}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> UpdatePlan(int id, MembershipPlanDto model)
+        public async Task<ActionResult> UpdatePlan(int id, MembershipPlanUpdateDTO model)
         {
             return Ok(APIResponse<MembershipPlanResponseDto>
                 .Success(await planService.UpdatePlanAsync(id, model)));
