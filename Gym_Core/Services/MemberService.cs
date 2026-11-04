@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Gym_Core.DTOs;
+using Gym_Core.Enums;
 using Gym_Core.Exceptions;
 using Gym_Core.Interfaces;
 using Gym_Core.Models;
@@ -12,8 +13,51 @@ namespace Gym_Core.Services
 {
     public class MemberService : IMemberService
     {
-        private readonly IUnitOfWork unitOfWork;
+        private static SubscriptionStatus GetEffectiveStatus(Subscription s)
+        {
+            if (s.Status != SubscriptionStatus.Active)
+                return s.Status;
 
+            var expiredByDate = s.EndDate < DateTime.UtcNow.Date;
+            var expiredBySessions = s.Plan.SessionsCount > 0 && s.SessionsRemaining <= 0;
+
+            return (expiredByDate || expiredBySessions)
+                ? SubscriptionStatus.Expired
+                : SubscriptionStatus.Active;
+        }
+        private static SubscriptionResponseDto MapToSubscriptionResponse(Subscription subscription)
+        {
+            return new SubscriptionResponseDto
+            {
+                Id = subscription.Id,
+                PlanId = subscription.PlanId,
+                MemberId = subscription.MemberId,
+                MemberName = subscription.Member.FullName,
+                StartDate = subscription.StartDate,
+                EndDate = subscription.EndDate,
+                PaidAmount = subscription.PaidAmount,
+                PlanName = subscription.Plan.Name,
+                Status = GetEffectiveStatus(subscription),
+                RefundAmount = subscription.RefundAmount,
+                SessionsRemaining = subscription.SessionsRemaining
+            };
+        }
+        private static AttendanceResponseDto MapToAttendanseResponse(Attendance attendance)
+        {
+            return new AttendanceResponseDto
+            {
+                MemberName = attendance.Member.FullName,
+                MemberId = attendance.Member.Id,
+                CheckInTime = attendance.CheckInTime,
+                SubscriptionId = attendance.SubscriptionId,
+                PlanName = attendance.Subscription.Plan.Name,
+                SessionsRemaining = attendance.Subscription.SessionsRemaining,
+                Id = attendance.Id
+            };
+        }
+
+
+        private readonly IUnitOfWork unitOfWork;
         public MemberService(IUnitOfWork unitOfWork)
         {
             this.unitOfWork = unitOfWork;
@@ -105,19 +149,32 @@ namespace Gym_Core.Services
             return query;
         }
 
-        public async Task<Member> GetMemberProfileAsync(int id, bool WithSubscriptions = false, bool WithAttendances = false)   // with details
+        public async Task<MemberProfileDto> GetMemberProfileAsync(int id, bool WithSubscriptions = false, bool WithAttendances = false)   // with details
         {
             var includes = new List<string>();
 
-            if (WithSubscriptions is true) includes.Add("Subscriptions");
-            if (WithAttendances is true) includes.Add("Attendances");
+            if (WithSubscriptions is true)
+            {
+                includes.Add("Subscriptions.Plan");
+            }
+            if (WithAttendances is true) {
+                includes.Add("Attendances.Subscription.Plan");
+            }
 
             var query = await unitOfWork.Members.GetAsync( m => m.Id == id, includes.ToArray());
 
             if (query == null)
                 throw new NotFoundException("This member is not found");
 
-            return query;
+            return new MemberProfileDto
+            {
+                Id = id,
+                FullName = query.FullName,
+                IsActive = query.IsActive,
+                Phone = query.Phone,
+                Subscriptions = WithSubscriptions ? query.Subscriptions.Select(MapToSubscriptionResponse).ToList() : null,
+                Attendances = WithAttendances ? query.Attendances.Select(MapToAttendanseResponse).ToList() : null
+            };
         }
 
         public async Task<Member> UpdateMember(int id, MemberUpdateDTO memberDto)

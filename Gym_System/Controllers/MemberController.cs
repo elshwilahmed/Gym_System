@@ -45,7 +45,7 @@ namespace Gym_System.Controllers
         [Route("GetMemberProfile/{id:int}")]
         public async Task<ActionResult> GetMemberProfileAsync(int id, bool WithSubscriptions, bool WithAttendances)
         {
-            return Ok(APIResponse<Member>.Success(await memberService.GetMemberProfileAsync(id, 
+            return Ok(APIResponse<MemberProfileDto>.Success(await memberService.GetMemberProfileAsync(id, 
                                                                             WithSubscriptions, WithAttendances)));
         }
 

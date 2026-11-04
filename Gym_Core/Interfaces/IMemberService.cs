@@ -14,7 +14,7 @@ namespace Gym_Core.Interfaces
 
         Task<Member> GetMemberByIdAsync(int id);
 
-        Task<Member> GetMemberProfileAsync(int id, bool WithSubscriptions = false, bool WithAttendances = false);
+        Task<MemberProfileDto> GetMemberProfileAsync(int id, bool WithSubscriptions = false, bool WithAttendances = false);
 
         Task<IEnumerable<Member>> GetMemberByPhoneOrNameAsync(string? searchTerm = null);
 

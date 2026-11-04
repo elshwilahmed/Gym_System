@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Gym_Core.Enums;
 
@@ -23,7 +24,7 @@ namespace Gym_Core.DTOs
         public decimal? PaidAmount { get; set; }
         public decimal RefundAmount { get; set; }
         public int? SessionsRemaining { get; set; }
-
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public SubscriptionStatus Status { get; set; }
     }
 }
