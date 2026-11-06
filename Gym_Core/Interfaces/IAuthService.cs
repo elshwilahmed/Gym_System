@@ -10,5 +10,7 @@ namespace Gym_Core.Interfaces
     public interface IAuthService
     {
         Task<AuthLoginResponseDTO> LoginAsync(AuthLoginDTO model);
+        Task<IEnumerable<string>> GetAllRoles();
+
     }
 }

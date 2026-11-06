@@ -29,5 +29,14 @@ namespace Gym_System.Controllers
 
             return Ok(APIResponse<AuthLoginResponseDTO>.Success(res));
         }
+
+        [HttpGet]
+        [Route("GetAllRoles")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> GetAllRoles()
+        {
+            return Ok(APIResponse<IEnumerable<string>>
+                .Success(await authService.GetAllRoles()));
+        }
     }
 }
