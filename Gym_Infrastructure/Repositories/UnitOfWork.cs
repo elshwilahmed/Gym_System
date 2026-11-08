@@ -12,7 +12,7 @@ namespace Gym_Infrastructure.Repositories
         public IGeniricRepository<Subscription> Subscriptions { get; private set; }
         public IGeniricRepository<MembershipPlan> Plans { get; private set; }
         public IGeniricRepository<Attendance> Attendances { get; private set; }
-
+        public IGeniricRepository<RefreshToken> RefreshTokens { get; private set; }
 
         public UnitOfWork(GymDbContext context)
         {
@@ -22,6 +22,7 @@ namespace Gym_Infrastructure.Repositories
             Subscriptions = new GenericRepository<Subscription>(_context);
             Plans = new GenericRepository<MembershipPlan>(_context);
             Attendances = new GenericRepository<Attendance>(_context);
+            RefreshTokens = new GenericRepository<RefreshToken>(_context);
         }
 
         public async Task CompleteAsync()

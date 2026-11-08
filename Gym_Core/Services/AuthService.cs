@@ -22,14 +22,16 @@ namespace Gym_Core.Services
         private readonly UserManager<AppUser> userManager;
         private readonly IJWTService jwt;
         private readonly RoleManager<IdentityRole<int>> roleManager;
+        private readonly IUnitOfWork unitOfWork;
         private readonly JWTsettings options;
 
         public AuthService(UserManager<AppUser> userManager, IOptions<JWTsettings> options,
-                            IJWTService jwt, RoleManager<IdentityRole<int>> roleManager)
+                            IJWTService jwt, RoleManager<IdentityRole<int>> roleManager, IUnitOfWork unitOfWork)
         {
             this.userManager = userManager;
             this.jwt = jwt;
             this.roleManager = roleManager;
+            this.unitOfWork = unitOfWork;
             this.options = options.Value;
         }
 
@@ -49,13 +51,26 @@ namespace Gym_Core.Services
             var jwtToken = await jwt.GenerateJwtTokenAsync(user);
             var userRoles = await userManager.GetRolesAsync(user);
 
+            var refreshToken = jwt.GenerateRefreshToken();
+            var refreshTokenHash = jwt.Hash(refreshToken);
+
+            await unitOfWork.RefreshTokens.AddAsync(new RefreshToken
+            {
+                UserId = user.Id,
+                TokenHash = refreshTokenHash,     
+                CreatedOn = DateTime.UtcNow,
+                ExpiresOn = DateTime.UtcNow.AddDays(options.RefrshTokenExpiryInDays)
+            });
+            await unitOfWork.CompleteAsync();
+
             return new AuthLoginResponseDTO()
             {
                 IsAuthenticated = true,
                 Email = user.Email!,
                 Roles = userRoles.ToList(),
                 Token = jwtToken,
-                ExpiresOn = DateTime.UtcNow.AddDays(options.ExpiryInDays) 
+                RefreshToken = refreshToken,
+                ExpiresOn = DateTime.UtcNow.AddMinutes(options.ExpiryInMinutes)
             };
         }
 
@@ -64,6 +79,51 @@ namespace Gym_Core.Services
             var all = await roleManager.Roles.Select(r => r.Name).ToListAsync();
 
             return all!;
+        }
+
+        public async Task<AuthLoginResponseDTO> Refresh(RefreshRequestDTO dto)
+        {
+            var hashToken = jwt.Hash(dto.refreshToken);
+            var stored = await unitOfWork.RefreshTokens.GetAsync(r => r.TokenHash == hashToken, new[] {"User"});
+
+            if (stored == null || stored.IsActive == false)
+                throw new UnauthorizedException("Invalid Refresh Token");
+
+            var response = new AuthLoginResponseDTO()
+            {
+                Email = stored.User.Email!,
+                FullName = stored.User.FirstName + " " + stored.User.LastName,
+                Token = await jwt.GenerateJwtTokenAsync(stored.User),
+                RefreshToken = jwt.GenerateRefreshToken(),
+                IsAuthenticated = true,
+                ExpiresOn = DateTime.UtcNow.AddMinutes(options.ExpiryInMinutes),
+                Roles = await userManager.GetRolesAsync(stored.User)
+            };
+
+            await unitOfWork.RefreshTokens.AddAsync(new RefreshToken
+            {
+                CreatedOn = DateTime.UtcNow,
+                TokenHash = jwt.Hash(response.RefreshToken), 
+                ExpiresOn = DateTime.UtcNow.AddDays(options.RefrshTokenExpiryInDays) ,
+                UserId = stored.User.Id
+            });
+            stored.RevokedOn = DateTime.UtcNow;
+
+            await unitOfWork.CompleteAsync();
+
+            return response;
+        }
+
+        public async Task LogoutAsync(RefreshRequestDTO dto)
+        {
+            var hash = jwt.Hash(dto.refreshToken);
+            var stored = await unitOfWork.RefreshTokens.GetAsync(r => r.TokenHash == hash);
+
+            if (stored == null || !stored.IsActive)
+                return;
+
+            stored.RevokedOn = DateTime.UtcNow;
+            await unitOfWork.CompleteAsync();
         }
     }
 }

@@ -212,6 +212,40 @@ namespace Gym_Infrastructure.Migrations
                     b.ToTable("MembershipPlans");
                 });
 
+            modelBuilder.Entity("Gym_Core.Models.RefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("RevokedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
+                });
+
             modelBuilder.Entity("Gym_Core.Models.Subscription", b =>
                 {
                     b.Property<int>("Id")
@@ -439,6 +473,17 @@ namespace Gym_Infrastructure.Migrations
                     b.Navigation("Subscription");
                 });
 
+            modelBuilder.Entity("Gym_Core.Models.RefreshToken", b =>
+                {
+                    b.HasOne("Gym_Core.Models.AppUser", "User")
+                        .WithMany("RefreshTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Gym_Core.Models.Subscription", b =>
                 {
                     b.HasOne("Gym_Core.Models.AppUser", "Creator")
@@ -519,6 +564,8 @@ namespace Gym_Infrastructure.Migrations
 
             modelBuilder.Entity("Gym_Core.Models.AppUser", b =>
                 {
+                    b.Navigation("RefreshTokens");
+
                     b.Navigation("Subscriptions");
                 });
 

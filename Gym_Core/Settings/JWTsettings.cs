@@ -11,7 +11,8 @@ namespace Gym_Core.Settings
         public string Key { get; set; } = string.Empty;
         public string Issuer { get; set; } = string.Empty;
         public string Audience { get; set; } = string.Empty;
-        public double ExpiryInDays { get; set; }
+        public double ExpiryInMinutes { get; set; }
+        public double RefrshTokenExpiryInDays { get; set; }
     }
 
 }

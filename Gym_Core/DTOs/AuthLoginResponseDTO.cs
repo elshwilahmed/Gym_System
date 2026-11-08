@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Gym_Core.DTOs
@@ -14,6 +15,8 @@ namespace Gym_Core.DTOs
         public string FullName { get; set; } = string.Empty;
         public IEnumerable<string> Roles { get; set; } = new List<string>();
         public string Token { get; set; } = string.Empty;
-        public DateTime ExpiresOn { get; set; }
+        public DateTime ExpiresOn { get; set; }      // token expiration
+
+        public string RefreshToken { get; set; } = string.Empty;
     }
 }

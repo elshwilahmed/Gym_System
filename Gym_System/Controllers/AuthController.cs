@@ -38,5 +38,24 @@ namespace Gym_System.Controllers
             return Ok(APIResponse<IEnumerable<string>>
                 .Success(await authService.GetAllRoles()));
         }
+
+        [HttpPost]
+        [Route("Refresh")]
+        [AllowAnonymous]
+        public async Task<ActionResult> Refresh(RefreshRequestDTO refresh)
+        {
+            return Ok(APIResponse<AuthLoginResponseDTO>
+                .Success(await authService.Refresh(refresh), "Token refreshed"));
+        }
+
+        [HttpPost]
+        [Route("Logout")]
+        [AllowAnonymous]
+        public async Task<ActionResult> Logout(RefreshRequestDTO refresh)
+        {
+            await authService.LogoutAsync(refresh);
+
+            return Ok(APIResponse<string>.Success(null!, "Logged out successfully"));
+        }
     }
 }

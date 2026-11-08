@@ -14,6 +14,7 @@ namespace Gym_Core.Interfaces
         IGeniricRepository <MembershipPlan> Plans { get; }
         IGeniricRepository <Subscription> Subscriptions { get; }
         IGeniricRepository<Attendance> Attendances { get; }
+        IGeniricRepository<RefreshToken> RefreshTokens { get; }
 
         public Task CompleteAsync(); 
 

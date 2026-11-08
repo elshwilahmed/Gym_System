@@ -11,6 +11,8 @@ namespace Gym_Core.Interfaces
     {
         Task<AuthLoginResponseDTO> LoginAsync(AuthLoginDTO model);
         Task<IEnumerable<string>> GetAllRoles();
+        Task<AuthLoginResponseDTO> Refresh(RefreshRequestDTO dto);
+        Task LogoutAsync(RefreshRequestDTO dto);
 
     }
 }

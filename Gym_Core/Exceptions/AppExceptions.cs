@@ -30,4 +30,8 @@ namespace Gym_Core.Exceptions
     {
         public BadRequestException(string message) : base(message, 400) { }
     }
+    public class UnauthorizedException : AppException
+    {
+        public UnauthorizedException(string message) : base(message, 401) { }
+    }
 }

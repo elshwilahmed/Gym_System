@@ -16,6 +16,7 @@ namespace Gym_Infrastructure.Data
         public DbSet<Attendance> Attendances { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
         public DbSet<MembershipPlan> MembershipPlans { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -34,6 +35,8 @@ namespace Gym_Infrastructure.Data
             builder.Entity<Attendance>()
             .HasOne(a => a.Subscription).WithMany(s => s.Attendances)
             .HasForeignKey(a => a.SubscriptionId).OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<RefreshToken>().HasIndex(r => r.TokenHash).IsUnique();
 
             builder.Entity<IdentityRole<int>>().HasData(
                 new IdentityRole<int>()

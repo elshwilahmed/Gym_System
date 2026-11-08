@@ -63,7 +63,7 @@ namespace Gym_Core.Services
                 Message = "User registered successfully!",
                 Email = newUser.Email,
                 Roles = new List<string> { model.Role },
-                ExpiresOn = DateTime.UtcNow.AddDays(options.ExpiryInDays)
+                ExpiresOn = DateTime.UtcNow.AddMinutes(options.ExpiryInMinutes)
             };
 
         }

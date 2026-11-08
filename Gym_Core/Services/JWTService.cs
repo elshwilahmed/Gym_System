@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using Gym_Core.Interfaces;
 using Gym_Core.Models;
 using Gym_Core.Settings;
@@ -46,7 +46,7 @@ namespace Gym_Core.Services
             var token = new JwtSecurityToken(
                 issuer: jwt.Issuer,
                 audience: jwt.Audience,
-                expires: DateTime.UtcNow.AddDays(jwt.ExpiryInDays),
+                expires: DateTime.UtcNow.AddMinutes(jwt.ExpiryInMinutes),
                 claims: claims,
                 signingCredentials: new SigningCredentials(SigningKey, SecurityAlgorithms.HmacSha256)
             );
@@ -54,6 +54,13 @@ namespace Gym_Core.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-      
+        public string GenerateRefreshToken()
+        {
+            return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+        }
+        public string Hash(string refreshToken)
+        {
+            return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
+        }
     }
 }

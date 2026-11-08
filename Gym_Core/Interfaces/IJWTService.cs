@@ -10,5 +10,7 @@ namespace Gym_Core.Interfaces
     public interface IJWTService
     {
         Task<string> GenerateJwtTokenAsync(AppUser user);
+        string GenerateRefreshToken();
+        string Hash(string refreshToken);
     }
 }

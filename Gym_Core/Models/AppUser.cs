@@ -16,6 +16,8 @@ namespace Gym_Core.Models
         public string Phone { get; set; } = String.Empty;
 
         public ICollection<Subscription> Subscriptions { get; set; } = new List<Subscription>();
+        public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+
 
     }
 }
