@@ -64,6 +64,26 @@ namespace Gym_System.Controllers
             return Ok(APIResponse<IEnumerable<SubscriptionResponseDto>>
                 .Success(await subscriptionService.GetAllSubscriptionsAsync(includeExpired)));
         }
+
+        [HttpPut]
+        [Route("FreezeSubscription/{id:int}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> FreezeSubscription(int id, FreezeSubscriptionDTO dto)
+        {
+            return Ok(APIResponse<SubscriptionResponseDto>
+                .Success(await subscriptionService.FreezeAsync(id, dto),
+                         "Subscription frozen successfully"));
+        }
+
+        [HttpPut]
+        [Route("UnfreezeSubscription/{id:int}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> UnfreezeSubscription(int id)
+        {
+            return Ok(APIResponse<SubscriptionResponseDto>
+                .Success(await subscriptionService.UnFreezeAsync(id),
+                         "Subscription unfrozen successfully"));
+        }
     }
 }
 

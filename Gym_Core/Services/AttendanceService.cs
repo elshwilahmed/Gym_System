@@ -33,6 +33,24 @@ namespace Gym_Core.Services
                 : SubscriptionStatus.Active;
         }
 
+        private static void UnfreezeNow(Subscription s)
+        {
+            if (s.Status != SubscriptionStatus.Frozen || s.FrozenAt is null || s.FreezeEndsAt is null)
+                return;
+
+            var today = DateTime.UtcNow.Date;
+            var plannedEnd = s.FreezeEndsAt.Value.Date;
+
+            var effectiveEnd = today < plannedEnd ? today : plannedEnd;
+            var actualDays = (effectiveEnd - s.FrozenAt.Value.Date).Days;
+
+            s.EndDate = s.EndDate.AddDays(actualDays);
+            s.TotalFrozenDays += actualDays;
+            s.Status = SubscriptionStatus.Active;
+            s.FrozenAt = null;
+            s.FreezeEndsAt = null;
+        }
+
         public async Task<AttendanceResponseDto> CheckInAsync(int id)
         {
             var ExistingMember = await unitOfWork.Members.GetAsync(m => m.Id == id);
@@ -42,12 +60,18 @@ namespace Gym_Core.Services
                 throw new BadRequestException("This member is not active");
 
             var subs = await unitOfWork.Subscriptions
-                       .GetAllAsync(s => s.MemberId == id && s.Status == SubscriptionStatus.Active, new[] { "Plan" });
+                       .GetAllAsync(s => s.MemberId == id 
+                            &&( s.Status == SubscriptionStatus.Active || s.Status == SubscriptionStatus.Frozen)
+                            , new[] { "Plan" });
+
+            foreach (var sub in subs)
+                UnfreezeNow(sub);
+
             var subscription = subs.FirstOrDefault(s => GetEffectiveStatus(s) == SubscriptionStatus.Active);
 
             if (subscription == null)
                 throw new BadRequestException("This member not subscripe in any membership plan");
-
+            
             var today = DateTime.UtcNow.Date;
 
             var already = await unitOfWork.Attendances.GetAsync(

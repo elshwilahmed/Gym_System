@@ -10,7 +10,8 @@ namespace Gym_Core.Enums
     {
         Active = 1,
         Expired,
-        Cancelled
+        Cancelled,
+        Frozen
     }
 
 }

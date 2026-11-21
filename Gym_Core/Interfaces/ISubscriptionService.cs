@@ -14,5 +14,10 @@ namespace Gym_Core.Interfaces
         Task<SubscriptionResponseDto> GetByIdAsync(int id);
         Task<IEnumerable<SubscriptionResponseDto>> GetAllSubscriptionsAsync(bool IncludingExpired = false);
         Task<IEnumerable<SubscriptionResponseDto>> GetMemberSubscriptionsAsync(int memberId);
+        Task<SubscriptionResponseDto> FreezeAsync(int Id, FreezeSubscriptionDTO dto);
+        Task<SubscriptionResponseDto> UnFreezeAsync(int Id);
+        Task UnfreezeExpiredSubscriptionsAsync();
+
+
     }
 }

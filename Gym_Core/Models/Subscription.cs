@@ -14,11 +14,19 @@ namespace Gym_Core.Models
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public decimal? PaidAmount { get; set; }
-        public int? SessionsRemaining { get; set; }          
+        public int? SessionsRemaining { get; set; }   
+        
         public DateTime CreatedAt { get; set; }
         public decimal RefundAmount { get; set; }
+
         public DateTime? CancelledAt { get; set; }
         public string? CancelReason { get; set; }
+
+        public DateTime? FrozenAt { get; set; }
+        public DateTime? FreezeEndsAt { get; set; }   
+        public int TotalFrozenDays { get; set; }    
+        public string? FreezeReason { get; set; }
+
         public SubscriptionStatus Status { get; set; }
 
         public int MemberId { get; set; }

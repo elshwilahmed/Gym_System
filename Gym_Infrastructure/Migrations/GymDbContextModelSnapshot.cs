@@ -272,6 +272,15 @@ namespace Gym_Infrastructure.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("FreezeEndsAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FreezeReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("FrozenAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("MemberId")
                         .HasColumnType("int");
 
@@ -292,6 +301,9 @@ namespace Gym_Infrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalFrozenDays")
                         .HasColumnType("int");
 
                     b.HasKey("Id");

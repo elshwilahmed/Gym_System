@@ -21,6 +21,8 @@ namespace Gym_Core.DTOs
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
 
+        public DateTime? FrozenAt { get; set; }
+        public DateTime? FreezeEndsAt { get; set; }
         public decimal? PaidAmount { get; set; }
         public decimal RefundAmount { get; set; }
         public int? SessionsRemaining { get; set; }

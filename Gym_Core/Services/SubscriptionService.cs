@@ -47,7 +47,9 @@ namespace Gym_Core.Services
                 PlanName = subscription.Plan.Name,
                 Status = GetEffectiveStatus(subscription),
                 RefundAmount = subscription.RefundAmount,
-                SessionsRemaining = subscription.SessionsRemaining
+                SessionsRemaining = subscription.SessionsRemaining,
+                FreezeEndsAt = subscription.FreezeEndsAt,
+                FrozenAt = subscription.FrozenAt
             };
         }
 
@@ -61,13 +63,21 @@ namespace Gym_Core.Services
             if (ExistingPlan == null || ExistingPlan.IsActive == false) 
                 throw new NotFoundException("This Plan wasn't found!");
 
-            var ActiveMemberSubscription = await unitOfWork.Subscriptions.
-                GetAllAsync(s => s.Status == SubscriptionStatus.Active && s.MemberId == ExistingMember.Id, new[] { "Plan" });
-            foreach (var sub in ActiveMemberSubscription.Where(sub => GetEffectiveStatus(sub) == SubscriptionStatus.Active))
+            var MemberSubscriptions = await unitOfWork.Subscriptions.
+                GetAllAsync(s => (s.Status == SubscriptionStatus.Active || s.Status == SubscriptionStatus.Frozen)
+                            && s.MemberId == ExistingMember.Id, new[] { "Plan" });
+
+            foreach (var sub in MemberSubscriptions)
             {
-                sub.Status = SubscriptionStatus.Cancelled;
-                sub.CancelledAt = DateTime.UtcNow;
-                sub.CancelReason = "Reblaced by renewal!";
+                if (sub.Status == SubscriptionStatus.Frozen ||
+                    GetEffectiveStatus(sub) == SubscriptionStatus.Active)
+                {
+                    sub.Status = SubscriptionStatus.Cancelled;
+                    sub.CancelledAt = DateTime.UtcNow;
+                    sub.CancelReason = "Replaced by renewal";
+                    sub.FrozenAt = null;        
+                    sub.FreezeEndsAt = null;
+                }
             }
 
             var today = DateTime.UtcNow.Date;
@@ -84,7 +94,8 @@ namespace Gym_Core.Services
                 SessionsRemaining = ExistingPlan.SessionsCount,
                 Status = SubscriptionStatus.Active,
                 Member = ExistingMember,
-                Plan = ExistingPlan
+                Plan = ExistingPlan,
+                TotalFrozenDays = 0
             };
 
             await unitOfWork.Subscriptions.AddAsync(Subscription);
@@ -100,16 +111,18 @@ namespace Gym_Core.Services
             if (Existing is null)
                 throw new NotFoundException("This subscription was not found");
 
-            if (GetEffectiveStatus(Existing) != SubscriptionStatus.Active)
+            if (Existing.Status != SubscriptionStatus.Active && Existing.Status != SubscriptionStatus.Frozen)
                 throw new BadRequestException("Only an active subscriptions can be cancelled");
 
             if (dto.RefundAmount < 0 || dto.RefundAmount > Existing.PaidAmount)
                 throw new BadRequestException("Refund amount must be between 0 and the paid amount.");
 
             Existing.Status = SubscriptionStatus.Cancelled; 
-            Existing.CancelledAt = DateTime.UtcNow.Date;
+            Existing.CancelledAt = DateTime.UtcNow;
             Existing.CancelReason = dto.Reason.Trim();
-            Existing.RefundAmount = dto.RefundAmount;    
+            Existing.RefundAmount = dto.RefundAmount;
+            Existing.FrozenAt = null;
+            Existing.FreezeEndsAt = null;
 
             await unitOfWork.CompleteAsync();
 
@@ -118,6 +131,8 @@ namespace Gym_Core.Services
 
         public async Task<IEnumerable<SubscriptionResponseDto>> GetAllSubscriptionsAsync(bool IncludingExpired = false)
         {
+            await UnfreezeExpiredSubscriptionsAsync();  // for subscriptions frozen time over
+
             var subs = await unitOfWork.Subscriptions.GetAllAsync(null!, new[] { "Member", "Plan" });
 
             var res = subs; 
@@ -150,6 +165,90 @@ namespace Gym_Core.Services
                 .OrderByDescending(s => s.StartDate)  
                 .Select(MapToResponse)
                 .ToList();
+        }
+
+        public async Task<SubscriptionResponseDto> FreezeAsync(int Id, FreezeSubscriptionDTO dto)
+        {
+            var subscription = await unitOfWork.Subscriptions.GetAsync(s => s.Id == Id, new[] {"Member", "Plan"});
+
+            if (subscription == null)
+                throw new NotFoundException("This subscription was not found");
+
+            if (GetEffectiveStatus(subscription) != SubscriptionStatus.Active)
+                throw new BadRequestException("Only an active subscription can be frozen");
+
+            if (subscription.TotalFrozenDays > 0)
+                throw new BadRequestException("This subscription was already frozen once");
+
+            if (subscription.EndDate.Date <= DateTime.UtcNow.Date)
+                throw new BadRequestException("Subscription is about to end, cannot freeze");
+
+            subscription.Status = SubscriptionStatus.Frozen;
+            subscription.FrozenAt = DateTime.UtcNow.Date;
+            subscription.FreezeReason = dto.Reason?.Trim();
+            subscription.FreezeEndsAt = DateTime.UtcNow.Date.AddDays(dto.Days);
+
+            await unitOfWork.CompleteAsync();
+
+            return MapToResponse(subscription);
+        }
+
+        public async Task<SubscriptionResponseDto> UnFreezeAsync(int Id)
+        {
+            var subscription = await unitOfWork.Subscriptions.GetAsync(s => s.Id == Id, new[] {"Member", "Plan"});
+
+            if (subscription is null)
+                throw new NotFoundException("This subscription was not found");
+
+            if (subscription.Status != SubscriptionStatus.Frozen)
+                throw new BadRequestException($"this subscription is {subscription.Status}");
+
+            var today = DateTime.UtcNow.Date;
+            var frozenAt = subscription.FrozenAt!.Value.Date;
+            var plannedEnd = subscription.FreezeEndsAt!.Value.Date;
+
+            var effectiveEnd = today < plannedEnd ? today : plannedEnd;     // if late unfreeze -> plannedEnd will be actual end 
+            var actualDays = (effectiveEnd - frozenAt).Days;
+
+            subscription.EndDate = subscription.EndDate.AddDays(actualDays);
+
+            subscription.Status = SubscriptionStatus.Active;
+            subscription.TotalFrozenDays += actualDays; 
+            subscription.FrozenAt = null;
+            subscription.FreezeEndsAt = null;
+
+            await unitOfWork.CompleteAsync();
+
+            return MapToResponse(subscription);
+        }
+
+        public async Task UnfreezeExpiredSubscriptionsAsync()
+        {
+            var today = DateTime.UtcNow.Date;
+
+            var expiredFrozenList = await unitOfWork.Subscriptions.GetAllAsync(
+                s => s.Status == SubscriptionStatus.Frozen &&
+                     today >= s.FreezeEndsAt!.Value.Date);
+
+            var subscriptions = expiredFrozenList.ToList();
+            if (subscriptions.Count == 0)
+                return;
+
+            foreach (var sub in subscriptions)
+            {
+                var frozenDays = (sub.FreezeEndsAt!.Value.Date - sub.FrozenAt!.Value.Date).Days;
+
+                sub.TotalFrozenDays += frozenDays;
+                sub.EndDate = sub.EndDate.AddDays(frozenDays);
+                sub.Status = sub.EndDate.Date < today
+                    ? SubscriptionStatus.Expired
+                    : SubscriptionStatus.Active;
+
+                sub.FrozenAt = null;
+                sub.FreezeEndsAt = null;
+            }
+
+            await unitOfWork.CompleteAsync();
         }
     }
 }
