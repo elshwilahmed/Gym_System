@@ -10,6 +10,6 @@ namespace Gym_Core.DTOs
     {
         public int TotalVisits { get; set; }
         public int UniqueMembers { get; set; }
-        public List<AttendanceResponseDto> MembersAttendances { get; set; } = new();
+        public PagedResultDTO<AttendanceResponseDto> MembersAttendances { get; set; } = new();
     }
 }

@@ -59,10 +59,11 @@ namespace Gym_System.Controllers
 
         [HttpGet]
         [Route("GetAllSubscriptions")]
-        public async Task<ActionResult> GetAllSubscriptions([FromQuery] bool includeExpired = false)
+        public async Task<ActionResult> GetAllSubscriptions([FromQuery] int page = 1,
+                                                            [FromQuery] bool includeExpired = false)
         {
-            return Ok(APIResponse<IEnumerable<SubscriptionResponseDto>>
-                .Success(await subscriptionService.GetAllSubscriptionsAsync(includeExpired)));
+            return Ok(APIResponse<PagedResultDTO<SubscriptionResponseDto>>
+                .Success(await subscriptionService.GetAllSubscriptionsAsync(page, includeExpired)));
         }
 
         [HttpPut]

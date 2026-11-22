@@ -14,6 +14,9 @@ namespace Gym_Core.Interfaces
         Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> exp = null!, string[] including = null!);
         void Update(T Item);
         Task DeleteById(int Id);
+        Task<(IEnumerable<T> Items, int TotalCount)> GetPagedAsync(
+            int page, Expression<Func<T, bool>>? exp = null, 
+            string[]? including = null, bool descending = true, int pageSize = 20);
 
 
     }

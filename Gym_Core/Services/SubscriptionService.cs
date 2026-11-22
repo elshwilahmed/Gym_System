@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using Gym_Core.DTOs;
@@ -52,7 +53,6 @@ namespace Gym_Core.Services
                 FrozenAt = subscription.FrozenAt
             };
         }
-
         public async Task<SubscriptionResponseDto> CreateAsync(CreateSubscriptionDto dto, int creatorId)
         {
             var ExistingMember = await unitOfWork.Members.GetAsync(m => m.Id == dto.MemberId);
@@ -129,17 +129,25 @@ namespace Gym_Core.Services
             return MapToResponse(Existing);
         }
 
-        public async Task<IEnumerable<SubscriptionResponseDto>> GetAllSubscriptionsAsync(bool IncludingExpired = false)
+        public async Task<PagedResultDTO<SubscriptionResponseDto>> GetAllSubscriptionsAsync(int page, bool IncludingExpired = false)
         {
             await UnfreezeExpiredSubscriptionsAsync();  // for subscriptions frozen time over
 
-            var subs = await unitOfWork.Subscriptions.GetAllAsync(null!, new[] { "Member", "Plan" });
+            var today = DateTime.UtcNow.Date;
 
-            var res = subs; 
-            if(!IncludingExpired)
-                 res = subs.Where(s => s.Status != SubscriptionStatus.Expired);
+            var (subs, total) = await unitOfWork.Subscriptions.GetPagedAsync(page, s => IncludingExpired 
+                            || s.Status != SubscriptionStatus.Active          
+                            || (s.EndDate >= today                             
+                            && (s.Plan.SessionsCount == 0 || s.SessionsRemaining > 0)), new[] { "Member", "Plan" });
 
-            return res.Select(MapToResponse);
+
+            return new PagedResultDTO<SubscriptionResponseDto>
+            {
+                Items = subs.Select(MapToResponse).ToList(),
+                Page = page,
+                PageSize = 20,
+                TotalCount = total
+            };
         }
 
         public async Task<SubscriptionResponseDto> GetByIdAsync(int id)

@@ -12,7 +12,7 @@ namespace Gym_Core.Interfaces
         Task<SubscriptionResponseDto> CreateAsync(CreateSubscriptionDto dto, int creatorId);
         Task<SubscriptionResponseDto> CancelAsync(int id, CancelSubscriptionDto dto);
         Task<SubscriptionResponseDto> GetByIdAsync(int id);
-        Task<IEnumerable<SubscriptionResponseDto>> GetAllSubscriptionsAsync(bool IncludingExpired = false);
+        Task<PagedResultDTO<SubscriptionResponseDto>> GetAllSubscriptionsAsync(int page, bool IncludingExpired = false);
         Task<IEnumerable<SubscriptionResponseDto>> GetMemberSubscriptionsAsync(int memberId);
         Task<SubscriptionResponseDto> FreezeAsync(int Id, FreezeSubscriptionDTO dto);
         Task<SubscriptionResponseDto> UnFreezeAsync(int Id);

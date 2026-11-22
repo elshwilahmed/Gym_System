@@ -25,6 +25,18 @@ namespace Gym_Core.Services
                 ? SubscriptionStatus.Expired
                 : SubscriptionStatus.Active;
         }
+        private static MemberResponseDTO MapToMemberResponse(Member member)
+        {
+            return new MemberResponseDTO
+            {
+                Id = member.Id,
+                FullName = member.FullName,
+                Phone = member.Phone,
+                DateOfBirth = member.DateOfBirth,
+                Age = member.Age,
+                IsActive = member.IsActive
+            };
+        }
         private static SubscriptionResponseDto MapToSubscriptionResponse(Subscription subscription)
         {
             return new SubscriptionResponseDto
@@ -56,14 +68,13 @@ namespace Gym_Core.Services
             };
         }
 
-
         private readonly IUnitOfWork unitOfWork;
         public MemberService(IUnitOfWork unitOfWork)
         {
             this.unitOfWork = unitOfWork;
         }
 
-        public async Task<Member> AddMemberAsync(MemberRequestDTO member)
+        public async Task<MemberResponseDTO> AddMemberAsync(MemberRequestDTO member)
         {
             var existingMember = await unitOfWork.Members.GetAsync(m => m.Phone == member.Phone);
 
@@ -74,7 +85,7 @@ namespace Gym_Core.Services
 
                 existingMember.IsActive = true;
                 await unitOfWork.CompleteAsync();
-                return existingMember;
+                return MapToMemberResponse(existingMember);
             }
 
             if (!member.DateOfBirth.HasValue)   // nullable in the member request but required in the member model
@@ -94,10 +105,10 @@ namespace Gym_Core.Services
             await unitOfWork.Members.AddAsync(newMember);
             await unitOfWork.CompleteAsync();
 
-            return newMember;
+            return MapToMemberResponse( newMember);
         }
 
-        public async Task<Member> DeleteMember(int id)    // soft delete
+        public async Task<MemberResponseDTO> DeleteMember(int id)    // soft delete
         {
             var member = await unitOfWork.Members.GetAsync(m=>m.Id == id);
 
@@ -107,47 +118,39 @@ namespace Gym_Core.Services
             member.IsActive = false;
 
             await unitOfWork.CompleteAsync();
-            return member;
+            return MapToMemberResponse(member);
         }
 
-        public async Task<IEnumerable<Member>> GetAllMembersAsync(string? searchTerm = null)
+        public async Task<PagedResultDTO<MemberResponseDTO>> GetAllMembersAsync(int page, string? searchTerm = null)
         {
-            if (string.IsNullOrWhiteSpace(searchTerm))
-                return await unitOfWork.Members.GetAllAsync(m => m.IsActive == true);
+            var term = searchTerm?.Trim();
 
-            searchTerm = searchTerm!.Trim();
+            var (items, total) = await unitOfWork.Members.GetPagedAsync(
+                page,
+                m => m.IsActive &&
+                     (string.IsNullOrEmpty(term) ||     // if null or empty return all => always true
+                      m.FullName.Contains(term) ||
+                      m.Phone.Contains(term)));
 
-            var query = await unitOfWork.Members.GetAllAsync(m => (
-                                                            m.FullName.Contains(searchTerm) ||
-                                                            m.Phone.Contains(searchTerm)
-                                                            )  
-                                                            && m.IsActive==true);
-            return query;
+            return new PagedResultDTO<MemberResponseDTO>
+            {
+                Items = items.Select(MapToMemberResponse).ToList(),
+                Page = Math.Max(page, 1),
+                PageSize = 20,
+                TotalCount = total
+            };
         }
 
-        public async Task<Member> GetMemberByIdAsync(int id)
+        public async Task<MemberResponseDTO> GetMemberByIdAsync(int id)
         {
             var member = await unitOfWork.Members.GetAsync(m => m.Id == id);
 
             if (member == null)
                 throw new NotFoundException($"This member is not found");
 
-            return member;
+            return MapToMemberResponse( member);
         } 
 
-        public async Task<IEnumerable<Member>> GetMemberByPhoneOrNameAsync(string? searchTerm = null) // return all and receptionest will choose which need 
-        {
-            if (string.IsNullOrWhiteSpace(searchTerm))
-                return await GetAllMembersAsync(searchTerm);
-            searchTerm = searchTerm.Trim();
-
-            var query = await unitOfWork.Members.GetAllAsync(m => m.Phone.Contains(searchTerm) ||
-                                                               m.FullName.Contains(searchTerm));
-            if (!query.Any())
-                throw new NotFoundException("This member is not found");
-
-            return query;
-        }
 
         public async Task<MemberProfileDto> GetMemberProfileAsync(int id, bool WithSubscriptions = false, bool WithAttendances = false)   // with details
         {
@@ -177,7 +180,7 @@ namespace Gym_Core.Services
             };
         }
 
-        public async Task<Member> UpdateMember(int id, MemberUpdateDTO memberDto)
+        public async Task<MemberResponseDTO> UpdateMember(int id, MemberUpdateDTO memberDto)
         {
             var existingMember = await unitOfWork.Members.GetAsync(m => m.Id == id);
 
@@ -209,7 +212,7 @@ namespace Gym_Core.Services
                 existingMember.DateOfBirth = memberDto.DateOfBirth.Value;
 
             await unitOfWork.CompleteAsync();
-            return existingMember;
+            return MapToMemberResponse(existingMember);
         }
     }
 }

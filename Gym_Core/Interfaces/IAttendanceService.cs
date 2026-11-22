@@ -11,6 +11,6 @@ namespace Gym_Core.Interfaces
     {
         Task<AttendanceResponseDto> CheckInAsync(int id);
         Task CancelCheckInAsync(int id);
-        Task<ReportResponseDTO> GetReportAsync(AttendanceReportQueryDto query);
+        Task<ReportResponseDTO> GetReportAsync(AttendanceReportQueryDto query, int page);
     }
 }

@@ -21,9 +21,9 @@ namespace Gym_Infrastructure.Repositories
         }
         public async Task<T> AddAsync(T Item)
         {
-            if(Item == null)    
+            if (Item == null)
                 throw new Exception("The item is not found");
-                
+
             await db.Set<T>().AddAsync(Item);
             return Item;
         }
@@ -33,7 +33,7 @@ namespace Gym_Infrastructure.Repositories
             var Item = await db.Set<T>().FindAsync(Id);
 
             if (Item == null)
-                throw new Exception($"The item is not found in {typeof(T).Name}"); 
+                throw new Exception($"The item is not found in {typeof(T).Name}");
 
             db.Set<T>().Remove(Item);
         }
@@ -73,6 +73,34 @@ namespace Gym_Infrastructure.Repositories
             db.Set<T>().Update(Item);
         }
 
-        
+        public async Task<(IEnumerable<T> Items, int TotalCount)> GetPagedAsync
+            (int page, Expression<Func<T, bool>>? exp = null,
+            string[]? including = null, bool descending = true, int pageSize = 20)
+        {
+            page = Math.Max(page, 1);
+
+            IQueryable<T> query = db.Set<T>();
+
+            if (including != null)
+                foreach (var include in including)
+                    query = query.Include(include);
+
+            if (exp != null)
+                query = query.Where(exp);
+
+            var total = await query.CountAsync();
+
+            query = descending
+                ? query.OrderByDescending(e => EF.Property<int>(e, "Id"))
+                : query.OrderBy(e => EF.Property<int>(e, "Id"));             // in sql => ORDER BY [e].[Id]
+
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, total);         // Tuple (,)
+        }
+
     }
 }

@@ -22,7 +22,7 @@ namespace Gym_System.Controllers
         [Route("AddMember")]
         public async Task<ActionResult> AddMember(MemberRequestDTO member)
         {
-            return Ok(APIResponse<Member>.Success(await memberService.AddMemberAsync(member)));
+            return Ok(APIResponse<MemberResponseDTO>.Success(await memberService.AddMemberAsync(member)));
         }
 
         [HttpDelete]
@@ -30,15 +30,15 @@ namespace Gym_System.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> DeleteMember(int id)
         {
-            return Ok(APIResponse<Member>.Success(await memberService.DeleteMember(id)));
+            return Ok(APIResponse<MemberResponseDTO>.Success(await memberService.DeleteMember(id)));
         }
 
-
         [HttpGet]
-        [Route("GetMemberByPhoneOrName/{searchTerm?}")]
-        public async Task<ActionResult> GetMemberByPhoneOrNameAsync(string? searchTerm)
+        [Route("GetAllMembers")]
+        public async Task<ActionResult> GetAllMembers([FromQuery] int page = 1, [FromQuery] string? search = null)
         {
-            return Ok(APIResponse<IEnumerable<Member>>.Success(await memberService.GetMemberByPhoneOrNameAsync(searchTerm)));
+            return Ok(APIResponse<PagedResultDTO<MemberResponseDTO>>
+                .Success(await memberService.GetAllMembersAsync(page, search)));
         }
 
         [HttpGet]
@@ -53,7 +53,7 @@ namespace Gym_System.Controllers
         [Route("UpdateMember/{id:int}")]
         public async Task<ActionResult> UpdateMember(int id, MemberUpdateDTO memberDto)
         {
-            return Ok(APIResponse<Member>.Success(await memberService.UpdateMember(id, memberDto)));
+            return Ok(APIResponse<MemberResponseDTO>.Success(await memberService.UpdateMember(id, memberDto)));
         }
     }
 }

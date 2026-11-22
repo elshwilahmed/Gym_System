@@ -9,16 +9,14 @@ namespace Gym_Core.Interfaces
 {
     public interface IMemberService
     {
-        Task<Member> AddMemberAsync(MemberRequestDTO member);
-        Task<IEnumerable<Member>> GetAllMembersAsync(string? searchTerm = null);
+        Task<MemberResponseDTO> AddMemberAsync(MemberRequestDTO member);
+        Task<PagedResultDTO<MemberResponseDTO>> GetAllMembersAsync(int page, string? searchTerm = null);
 
-        Task<Member> GetMemberByIdAsync(int id);
+        Task<MemberResponseDTO> GetMemberByIdAsync(int id);
 
         Task<MemberProfileDto> GetMemberProfileAsync(int id, bool WithSubscriptions = false, bool WithAttendances = false);
 
-        Task<IEnumerable<Member>> GetMemberByPhoneOrNameAsync(string? searchTerm = null);
-
-        Task<Member> UpdateMember(int id, MemberUpdateDTO memberDto);
-        Task <Member> DeleteMember(int id);
+        Task<MemberResponseDTO> UpdateMember(int id, MemberUpdateDTO memberDto);
+        Task <MemberResponseDTO> DeleteMember(int id);
     }
 }

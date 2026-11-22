@@ -40,10 +40,10 @@ namespace Gym_System.Controllers
 
         [HttpGet]
         [Route("GetReport")]
-        public async Task<ActionResult> GetReport([FromQuery] AttendanceReportQueryDto query)
+        public async Task<ActionResult> GetReport([FromQuery] AttendanceReportQueryDto query, [FromQuery] int page = 1)
         {
             return Ok(APIResponse<ReportResponseDTO>
-                .Success(await attendanceService.GetReportAsync(query)));
+                .Success(await attendanceService.GetReportAsync(query, page)));
         }
     }
 }

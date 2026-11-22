@@ -139,16 +139,16 @@ namespace Gym_Core.Services
         }
 
 
-        public async Task<ReportResponseDTO> GetReportAsync(AttendanceReportQueryDto query)
+        public async Task<ReportResponseDTO> GetReportAsync(AttendanceReportQueryDto query, int page)
         {
             var from = query.From?.Date ?? DateTime.UtcNow.Date.AddDays(-30);
             var to = query.To?.Date.AddDays(1) ?? DateTime.UtcNow.AddDays(1).Date;
 
-            var attendances = await unitOfWork.Attendances.
-                GetAllAsync(a => a.CheckInTime >= from && a.CheckInTime < to &&
+            var (attendances, total) = await unitOfWork.Attendances.
+                GetPagedAsync(page, a => a.CheckInTime >= from && a.CheckInTime < to &&
                              (query.MemberId == null || a.MemberId == query.MemberId),  // one member or all (2 cases)
                                              new[] { "Member", "Subscription.Plan" });
-
+ 
             var membersAttendances = attendances.Select(
             a => new AttendanceResponseDto
             {
@@ -157,7 +157,8 @@ namespace Gym_Core.Services
                 Id = a.Id,
                 MemberId = a.MemberId,
                 MemberName = a.Member.FullName,
-                PlanName = a.Subscription.Plan.Name
+                PlanName = a.Subscription.Plan.Name,
+                SessionsRemaining = a.Subscription.SessionsRemaining,
             }
                 ).OrderByDescending(x => x.CheckInTime).ToList();
 
@@ -165,7 +166,14 @@ namespace Gym_Core.Services
             {
                 TotalVisits = membersAttendances.Count(),
                 UniqueMembers = membersAttendances.Select(x => x.MemberId).Distinct().Count(),
-                MembersAttendances = membersAttendances
+                MembersAttendances = new PagedResultDTO<AttendanceResponseDto>
+                {
+                    Items = membersAttendances,
+                    Page = page,
+                    PageSize = 20,
+                    TotalCount = total
+
+                }
             };
         }
 
