@@ -48,6 +48,17 @@ namespace Gym_Core.Services
             if (!isPasswordValid)
                 throw new BadRequestException("Incorrect Email Or password!");
 
+            if (!user.IsActive)
+            {
+                if(user.Email == "admin@gym.com")
+                {
+                    user.IsActive = true;
+                    await userManager.UpdateAsync(user);
+                }
+                else 
+                    throw new BadRequestException("This account is disabled.");
+            }
+
             var jwtToken = await jwt.GenerateJwtTokenAsync(user);
             var userRoles = await userManager.GetRolesAsync(user);
 
@@ -86,7 +97,7 @@ namespace Gym_Core.Services
             var hashToken = jwt.Hash(dto.refreshToken);
             var stored = await unitOfWork.RefreshTokens.GetAsync(r => r.TokenHash == hashToken, new[] {"User"});
 
-            if (stored == null || stored.IsActive == false)
+            if (stored == null || stored.IsActive == false  || stored.User.IsActive == false)
                 throw new UnauthorizedException("Invalid Refresh Token");
 
             var response = new AuthLoginResponseDTO()

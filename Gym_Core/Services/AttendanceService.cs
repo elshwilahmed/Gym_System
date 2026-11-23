@@ -158,7 +158,7 @@ namespace Gym_Core.Services
                 MemberId = a.MemberId,
                 MemberName = a.Member.FullName,
                 PlanName = a.Subscription.Plan.Name,
-                SessionsRemaining = a.Subscription.SessionsRemaining,
+                SessionsRemaining = a.Subscription.SessionsRemaining
             }
                 ).OrderByDescending(x => x.CheckInTime).ToList();
 

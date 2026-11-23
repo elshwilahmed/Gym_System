@@ -11,11 +11,11 @@ namespace Gym_Core.Interfaces
     public interface IAppUserService
     {
         Task<AuthRegisterResponseDTO> AddEmployee(AuthRegisterDTO model);
-        Task<AppUser> DeleteEmployee(int id);
-        Task<IEnumerable<AppUser>> GetAllEmployees();
-        Task<AppUser> GetEmployeeById(int id);
-        Task<AppUser> UpdateEmployeeById(int id, UpdateUserDTO model);
-
+        Task<AppUserResponseDTO> DeleteEmployee(int id);
+        Task<IEnumerable<AppUserResponseDTO>> GetAllEmployees();
+        Task<AppUserResponseDTO> GetEmployeeById(int id);
+        Task<AppUserResponseDTO> UpdateEmployeeById(int id, UpdateUserDTO model);
+        Task<AppUserResponseDTO> ActivateEmployee(int id);
 
     }
 }

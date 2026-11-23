@@ -14,6 +14,7 @@ namespace Gym_Core.Models
         public string LastName { get; set; } = String.Empty;
         [MaxLength(11), MinLength(11)]
         public string Phone { get; set; } = String.Empty;
+        public bool IsActive { get; set; } = true;
 
         public ICollection<Subscription> Subscriptions { get; set; } = new List<Subscription>();
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();

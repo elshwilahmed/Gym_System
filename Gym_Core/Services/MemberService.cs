@@ -209,7 +209,10 @@ namespace Gym_Core.Services
             }
 
             if (memberDto.DateOfBirth.HasValue)
-                existingMember.DateOfBirth = memberDto.DateOfBirth.Value;
+            {
+                if(memberDto.DateOfBirth.Value.Date != DateTime.UtcNow.Date)
+                    existingMember.DateOfBirth = memberDto.DateOfBirth.Value;
+            }
 
             await unitOfWork.CompleteAsync();
             return MapToMemberResponse(existingMember);

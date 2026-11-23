@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Gym_Core.Enums;
 
 namespace Gym_Core.DTOs
 {
@@ -12,7 +13,7 @@ namespace Gym_Core.DTOs
         public bool IsAuthenticated { get; set; }
         public string Email { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
-        public IEnumerable<string> Roles { get; set; } = new List<string>();
+        public IEnumerable<EmployeeRole> Roles { get; set; } = new List<EmployeeRole>();
         public DateTime ExpiresOn { get; set; }
     }
 }

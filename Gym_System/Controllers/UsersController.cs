@@ -35,7 +35,7 @@ namespace Gym_System.Controllers
         public async Task<IActionResult> GetAllEmployees()
         {
             var employees = await _appUserService.GetAllEmployees();
-            return Ok(APIResponse<IEnumerable<AppUser>>.Success(employees));
+            return Ok(APIResponse<IEnumerable<AppUserResponseDTO>>.Success(employees));
         }
 
         [HttpGet("Employee/{id:int}")]
@@ -43,7 +43,7 @@ namespace Gym_System.Controllers
         {
             var employee = await _appUserService.GetEmployeeById(id);
 
-            return Ok(APIResponse<AppUser>.Success(employee));
+            return Ok(APIResponse<AppUserResponseDTO>.Success(employee));
 
         }
 
@@ -54,6 +54,13 @@ namespace Gym_System.Controllers
             var deletedEmployee = await _appUserService.DeleteEmployee(id);
 
             return Ok(APIResponse<string>.Success(null!, msg:"The employee deleted successfully"));
+        }
+
+        [HttpPut("ActivateEmployee/{id:int}")]
+        public async Task<IActionResult> ActivateEmployee(int id)
+        {
+            return Ok(APIResponse<AppUserResponseDTO>
+                .Success(await _appUserService.ActivateEmployee(id), "The employee activated successfully"));
         }
     }
 }

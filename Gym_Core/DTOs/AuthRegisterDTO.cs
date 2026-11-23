@@ -4,7 +4,9 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Gym_Core.Enums;
 
 namespace Gym_Core.DTOs
 {
@@ -31,6 +33,7 @@ namespace Gym_Core.DTOs
         public string Password { get; set; } = string.Empty;
 
         [Required]
-        public string Role { get; set; } = string.Empty;
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public EmployeeRole Role { get; set; }
     }
 }

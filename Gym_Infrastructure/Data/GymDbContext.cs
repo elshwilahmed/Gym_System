@@ -44,7 +44,7 @@ namespace Gym_Infrastructure.Data
                     Id = 1,
                     Name = "Admin",
                     NormalizedName = "ADMIN",
-                    ConcurrencyStamp = "1"
+                    ConcurrencyStamp = "1",
                 },
                 new IdentityRole<int>()
                 {
