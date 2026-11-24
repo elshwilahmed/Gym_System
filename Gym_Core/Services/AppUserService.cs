@@ -181,7 +181,7 @@ namespace Gym_Core.Services
             return dto;
         }
 
-        public async Task<AppUserResponseDTO> UpdateEmployeeById(int id, UpdateUserDTO model)
+        public async Task<AppUserResponseDTO> UpdateEmployeeById(int id, UpdateUserDTO model)  //for the next version if i want to create an endpoint
         {
             var existingUser = await userManager.FindByIdAsync($"{id}");
 

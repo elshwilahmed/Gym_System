@@ -12,6 +12,7 @@ namespace Gym_Core.Interfaces
         Task<IEnumerable<MembershipPlanResponseDto>> GetAllPlansAsync(bool IncludingInActive = false);
         Task<MembershipPlanResponseDto> GetPlanByIdAsync(int id);
         Task<MembershipPlanResponseDto> CreatePlanAsync(MembershipPlanDto model);
+        Task<MembershipPlanResponseDto> ActivatePlanAsync(int id);
         Task<MembershipPlanResponseDto> UpdatePlanAsync(int id, MembershipPlanUpdateDTO model);
         Task<MembershipPlanResponseDto> DeletePlanAsync(int id);
     }

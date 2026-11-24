@@ -37,6 +37,7 @@ namespace Gym_Core.Services
 
         }
 
+
         public async Task<MembershipPlanResponseDto> CreatePlanAsync(MembershipPlanDto model)
         {
             var Exist = await unitOfWork.Plans.GetAsync(p => p.Name.Trim() == model.Name.Trim());
@@ -68,6 +69,20 @@ namespace Gym_Core.Services
 
             return MapToResponse(newPlan);
 
+        }
+        public async Task<MembershipPlanResponseDto> ActivatePlanAsync(int id)
+        {
+            var existing = await unitOfWork.Plans.GetAsync(p=>p.Id==id);
+
+            if (existing is null)
+                throw new NotFoundException("This Plan wasn't found");
+            if (existing.IsActive == true)
+                throw new BadRequestException("This plan is already active");
+
+            existing.IsActive = true;
+            await unitOfWork.CompleteAsync();
+
+            return MapToResponse(existing);
         }
 
         public async Task<MembershipPlanResponseDto> DeletePlanAsync(int id)   // soft delete

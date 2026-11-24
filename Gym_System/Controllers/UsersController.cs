@@ -25,9 +25,6 @@ namespace Gym_System.Controllers
         {
             var result = await _appUserService.AddEmployee(model);
 
-            if (!result.IsAuthenticated)
-                return BadRequest(APIResponse<AuthRegisterResponseDTO>.Failure(result.Message));
-
             return Ok(APIResponse<AuthRegisterResponseDTO>.Success(result));
         }
 

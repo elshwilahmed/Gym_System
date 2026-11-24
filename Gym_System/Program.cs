@@ -70,6 +70,13 @@ builder.Services.AddScoped<IMembershipPlanService, MembershipPlanService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Front", policy =>
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
 
 
 var app = builder.Build();
@@ -83,7 +90,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseHttpsRedirection();
-
+app.UseCors("Front");
 app.UseAuthentication();
 app.UseAuthorization();
 
