@@ -29,6 +29,7 @@ namespace Gym_System.Controllers
         }
 
         [HttpGet("AllEmployees")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAllEmployees()
         {
             var employees = await _appUserService.GetAllEmployees();
@@ -58,6 +59,14 @@ namespace Gym_System.Controllers
         {
             return Ok(APIResponse<AppUserResponseDTO>
                 .Success(await _appUserService.ActivateEmployee(id), "The employee activated successfully"));
+        }
+
+        [HttpPut("ResetPassword/{id:int}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ResetEmployeePassword(int id, [FromBody] ResetPassDTO model)
+        {
+            await _appUserService.ResetEmployeePassword(id, model);
+            return Ok(APIResponse<bool>.Success(true, "Password reset successfully"));
         }
     }
 }

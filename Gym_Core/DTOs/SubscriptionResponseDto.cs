@@ -28,5 +28,7 @@ namespace Gym_Core.DTOs
         public int? SessionsRemaining { get; set; }
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public SubscriptionStatus Status { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public string CreatorName { get; set; } = string.Empty;
     }
 }

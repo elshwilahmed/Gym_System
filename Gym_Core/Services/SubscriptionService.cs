@@ -50,7 +50,11 @@ namespace Gym_Core.Services
                 RefundAmount = subscription.RefundAmount,
                 SessionsRemaining = subscription.SessionsRemaining,
                 FreezeEndsAt = subscription.FreezeEndsAt,
-                FrozenAt = subscription.FrozenAt
+                FrozenAt = subscription.FrozenAt,
+                CreatedAt = subscription.CreatedAt,
+                CreatorName = subscription.Creator != null
+                    ? subscription.Creator.FirstName + " " + subscription.Creator.LastName
+                    : "",
             };
         }
         public async Task<SubscriptionResponseDto> CreateAsync(CreateSubscriptionDto dto, int creatorId)
@@ -135,10 +139,9 @@ namespace Gym_Core.Services
 
             var today = DateTime.UtcNow.Date;
 
-            var (subs, total) = await unitOfWork.Subscriptions.GetPagedAsync(page, s => IncludingExpired 
-                            || s.Status != SubscriptionStatus.Active          
+            var (subs, total) = await unitOfWork.Subscriptions.GetPagedAsync(page, s => IncludingExpired         
                             || (s.EndDate >= today                             
-                            && (s.Plan.SessionsCount == 0 || s.SessionsRemaining > 0)), new[] { "Member", "Plan" });
+                            && (s.Plan.SessionsCount == 0 || s.SessionsRemaining > 0)), new[] { "Member", "Plan", "Creator" });
 
 
             return new PagedResultDTO<SubscriptionResponseDto>
@@ -257,6 +260,25 @@ namespace Gym_Core.Services
             }
 
             await unitOfWork.CompleteAsync();
+        }
+
+        public async Task<RevenueDTO> GetRevenueAsync(DateTime from, DateTime to)
+        {
+            var start = from.Date;
+            var end = to.Date.AddDays(1);
+
+            var created = await unitOfWork.Subscriptions.GetAllAsync(
+                s => s.CreatedAt >= start && s.CreatedAt < end);
+
+            var cancelled = await unitOfWork.Subscriptions.GetAllAsync(
+                s => s.CancelledAt != null && s.CancelledAt >= start && s.CancelledAt < end);
+
+            return new RevenueDTO
+            {
+                TotalPaid = created.Sum(s => s.PaidAmount)!.Value,
+                TotalRefunded = cancelled.Sum(s => s.RefundAmount),
+                SubscriptionsCount = created.Count()
+            };
         }
     }
 }

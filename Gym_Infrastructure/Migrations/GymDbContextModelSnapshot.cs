@@ -129,7 +129,7 @@ namespace Gym_Infrastructure.Migrations
 
                     b.HasIndex("SubscriptionId");
 
-                    b.ToTable("Attendances");
+                    b.ToTable("Attendances", (string)null);
                 });
 
             modelBuilder.Entity("Gym_Core.Models.Member", b =>
@@ -175,7 +175,7 @@ namespace Gym_Infrastructure.Migrations
                     b.HasIndex("Phone")
                         .IsUnique();
 
-                    b.ToTable("Members");
+                    b.ToTable("Members", (string)null);
                 });
 
             modelBuilder.Entity("Gym_Core.Models.MembershipPlan", b =>
@@ -212,7 +212,7 @@ namespace Gym_Infrastructure.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("MembershipPlans");
+                    b.ToTable("MembershipPlans", (string)null);
                 });
 
             modelBuilder.Entity("Gym_Core.Models.RefreshToken", b =>
@@ -246,7 +246,7 @@ namespace Gym_Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens");
+                    b.ToTable("RefreshTokens", (string)null);
                 });
 
             modelBuilder.Entity("Gym_Core.Models.Subscription", b =>
@@ -317,7 +317,7 @@ namespace Gym_Infrastructure.Migrations
 
                     b.HasIndex("PlanId");
 
-                    b.ToTable("Subscriptions");
+                    b.ToTable("Subscriptions", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>

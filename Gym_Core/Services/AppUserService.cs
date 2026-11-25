@@ -34,7 +34,7 @@ namespace Gym_Core.Services
             {
                 Id = user.Id,
                 FirstName = user.FirstName,
-                UserName = user.LastName,
+                UserName = user.UserName ?? "",
                 LastName = user.LastName,
                 Phone = user.Phone,
                 IsActive = user.IsActive,
@@ -160,12 +160,15 @@ namespace Gym_Core.Services
 
             foreach (var e in employees)
             {
+                if (e.Email == "admin@gym.com")
+                    continue;
+
                 var dto = MapToUserResponse(e);
                 dto.Role = (await userManager.GetRolesAsync(e)).FirstOrDefault() ?? "";
                 result.Add(dto);
             }
 
-            return result;
+            return result.OrderByDescending(r=>r.IsActive);
         }
 
         public async Task<AppUserResponseDTO> GetEmployeeById(int id)
@@ -212,6 +215,42 @@ namespace Gym_Core.Services
             }
             await userManager.UpdateAsync(existingUser);
             return MapToUserResponse(existingUser);
+        }
+
+        public async Task<bool> ResetEmployeePassword(int id, ResetPassDTO model)
+        {
+            if (string.IsNullOrWhiteSpace(model.NewPassword))
+                throw new BadRequestException("New password cannot be empty.");
+
+            var employee = await userManager.FindByIdAsync($"{id}");
+
+            if (employee is null)
+                throw new NotFoundException("This employee is not found!");
+
+            if (!employee.IsActive)
+                throw new BadRequestException("This employee is disabled. Activate the account first.");
+
+            var token = await userManager.GeneratePasswordResetTokenAsync(employee);
+            var resetResult = await userManager.ResetPasswordAsync(employee, token, model.NewPassword);
+
+            if (!resetResult.Succeeded)
+            {
+                var errors = new StringBuilder();
+                foreach (var error in resetResult.Errors)
+                    errors.AppendLine(error.Description);
+
+                throw new BadRequestException(errors.ToString().Trim());
+            }
+
+            var activeTokens = await unitOfWork.RefreshTokens.GetAllAsync(   // remove active refresh tokens to login again 
+                t => t.UserId == employee.Id && t.RevokedOn == null);
+
+            foreach (var t in activeTokens)
+                t.RevokedOn = DateTime.UtcNow;
+
+            await unitOfWork.CompleteAsync();
+
+            return true;
         }
     }
 }

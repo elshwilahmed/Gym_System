@@ -17,7 +17,7 @@ namespace Gym_Core.Interfaces
         Task<SubscriptionResponseDto> FreezeAsync(int Id, FreezeSubscriptionDTO dto);
         Task<SubscriptionResponseDto> UnFreezeAsync(int Id);
         Task UnfreezeExpiredSubscriptionsAsync();
-
+        Task<RevenueDTO> GetRevenueAsync(DateTime From, DateTime To);
 
     }
 }

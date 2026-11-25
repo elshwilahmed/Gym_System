@@ -31,7 +31,7 @@ namespace Gym_System.Controllers
                          "Subscription created successfully"));
         }
 
-        [HttpDelete]
+        [HttpPut]
         [Route("CancelSubscription/{id:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> CancelSubscription(int id, CancelSubscriptionDto dto)
@@ -84,6 +84,14 @@ namespace Gym_System.Controllers
             return Ok(APIResponse<SubscriptionResponseDto>
                 .Success(await subscriptionService.UnFreezeAsync(id),
                          "Subscription unfrozen successfully"));
+        }
+
+        [HttpGet]
+        [Route("GetRevenue")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> GetRevenue([FromQuery] DateTime from, [FromQuery] DateTime to)
+        {
+            return Ok(APIResponse<RevenueDTO>.Success(await subscriptionService.GetRevenueAsync(from, to)));
         }
     }
 }

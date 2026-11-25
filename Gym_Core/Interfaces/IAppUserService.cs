@@ -16,6 +16,7 @@ namespace Gym_Core.Interfaces
         Task<AppUserResponseDTO> GetEmployeeById(int id);
         Task<AppUserResponseDTO> UpdateEmployeeById(int id, UpdateUserDTO model);
         Task<AppUserResponseDTO> ActivateEmployee(int id);
+        Task<bool> ResetEmployeePassword(int id, ResetPassDTO model);
 
     }
 }
