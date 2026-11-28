@@ -12,6 +12,7 @@ using Gym_Core.Models;
 using Gym_Core.Settings;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -24,15 +25,18 @@ namespace Gym_Core.Services
         private readonly RoleManager<IdentityRole<int>> roleManager;
         private readonly IUnitOfWork unitOfWork;
         private readonly JWTsettings options;
+        private readonly ILogger<AuthService> logger;
 
         public AuthService(UserManager<AppUser> userManager, IOptions<JWTsettings> options,
-                            IJWTService jwt, RoleManager<IdentityRole<int>> roleManager, IUnitOfWork unitOfWork)
+                            IJWTService jwt, RoleManager<IdentityRole<int>> roleManager, IUnitOfWork unitOfWork,
+                            ILogger<AuthService> logger)
         {
             this.userManager = userManager;
             this.jwt = jwt;
             this.roleManager = roleManager;
             this.unitOfWork = unitOfWork;
             this.options = options.Value;
+            this.logger = logger;
         }
 
 
@@ -42,21 +46,31 @@ namespace Gym_Core.Services
             var user = await userManager.FindByEmailAsync(model.Email);
 
             if (user is null)
+            {
+                logger.LogWarning("Login failed: user not found for email {Email}", model.Email);
                 throw new BadRequestException("Incorrect Email Or password!");
+            }
 
             var isPasswordValid = await userManager.CheckPasswordAsync(user, model.Password);
             if (!isPasswordValid)
+            {
+                logger.LogWarning("Login failed: invalid password for user {UserId}", user.Id);
                 throw new BadRequestException("Incorrect Email Or password!");
+            }
 
             if (!user.IsActive)
             {
-                if(user.Email == "admin@gym.com")
+                if (user.Email == "admin@gym.com")
                 {
                     user.IsActive = true;
                     await userManager.UpdateAsync(user);
+                    logger.LogInformation("Default admin account {UserId} reactivated on login", user.Id);
                 }
-                else 
+                else
+                {
+                    logger.LogWarning("Login blocked: disabled account for user {UserId}", user.Id);
                     throw new BadRequestException("This account is disabled.");
+                }
             }
 
             var jwtToken = await jwt.GenerateJwtTokenAsync(user);
@@ -68,7 +82,7 @@ namespace Gym_Core.Services
             await unitOfWork.RefreshTokens.AddAsync(new RefreshToken
             {
                 UserId = user.Id,
-                TokenHash = refreshTokenHash,     
+                TokenHash = refreshTokenHash,
                 CreatedOn = DateTime.UtcNow,
                 ExpiresOn = DateTime.UtcNow.AddDays(options.RefrshTokenExpiryInDays)
             });
@@ -95,10 +109,13 @@ namespace Gym_Core.Services
         public async Task<AuthLoginResponseDTO> Refresh(RefreshRequestDTO dto)
         {
             var hashToken = jwt.Hash(dto.refreshToken);
-            var stored = await unitOfWork.RefreshTokens.GetAsync(r => r.TokenHash == hashToken, new[] {"User"});
+            var stored = await unitOfWork.RefreshTokens.GetAsync(r => r.TokenHash == hashToken, new[] { "User" });
 
-            if (stored == null || stored.IsActive == false  || stored.User.IsActive == false)
+            if (stored == null || stored.IsActive == false || stored.User.IsActive == false)
+            {
+                logger.LogWarning("Refresh token rejected: invalid or inactive token");
                 throw new UnauthorizedException("Invalid Refresh Token");
+            }
 
             var response = new AuthLoginResponseDTO()
             {
@@ -114,8 +131,8 @@ namespace Gym_Core.Services
             await unitOfWork.RefreshTokens.AddAsync(new RefreshToken
             {
                 CreatedOn = DateTime.UtcNow,
-                TokenHash = jwt.Hash(response.RefreshToken), 
-                ExpiresOn = DateTime.UtcNow.AddDays(options.RefrshTokenExpiryInDays) ,
+                TokenHash = jwt.Hash(response.RefreshToken),
+                ExpiresOn = DateTime.UtcNow.AddDays(options.RefrshTokenExpiryInDays),
                 UserId = stored.User.Id
             });
             stored.RevokedOn = DateTime.UtcNow;
@@ -135,6 +152,7 @@ namespace Gym_Core.Services
 
             stored.RevokedOn = DateTime.UtcNow;
             await unitOfWork.CompleteAsync();
+            logger.LogInformation("User {UserId} logged out and revoked refresh token", stored.UserId);
         }
     }
 }

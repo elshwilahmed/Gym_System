@@ -9,22 +9,25 @@ using Gym_Core.Enums;
 using Gym_Core.Exceptions;
 using Gym_Core.Interfaces;
 using Gym_Core.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Gym_Core.Services
 {
     public class SubscriptionService : ISubscriptionService
     {
         private readonly IUnitOfWork unitOfWork;
+        private readonly ILogger<SubscriptionService> logger;
 
-        public SubscriptionService(IUnitOfWork unitOfWork)
+        public SubscriptionService(IUnitOfWork unitOfWork, ILogger<SubscriptionService> logger)
         {
             this.unitOfWork = unitOfWork;
+            this.logger = logger;
         }
-        
+
         private static SubscriptionStatus GetEffectiveStatus(Subscription s)
         {
             if (s.Status != SubscriptionStatus.Active)
-                return s.Status;   
+                return s.Status;
 
             var expiredByDate = s.EndDate < DateTime.UtcNow.Date;
             var expiredBySessions = s.Plan.SessionsCount > 0 && s.SessionsRemaining <= 0;
@@ -33,7 +36,7 @@ namespace Gym_Core.Services
                 ? SubscriptionStatus.Expired
                 : SubscriptionStatus.Active;
         }  // To Know the real status of sub
-      
+
         private static SubscriptionResponseDto MapToResponse(Subscription subscription)
         {
             return new SubscriptionResponseDto
@@ -64,7 +67,7 @@ namespace Gym_Core.Services
                 throw new NotFoundException("This Member wasn't found!");
 
             var ExistingPlan = await unitOfWork.Plans.GetAsync(m => m.Id == dto.PlanId);
-            if (ExistingPlan == null || ExistingPlan.IsActive == false) 
+            if (ExistingPlan == null || ExistingPlan.IsActive == false)
                 throw new NotFoundException("This Plan wasn't found!");
 
             var MemberSubscriptions = await unitOfWork.Subscriptions.
@@ -79,7 +82,7 @@ namespace Gym_Core.Services
                     sub.Status = SubscriptionStatus.Cancelled;
                     sub.CancelledAt = DateTime.UtcNow;
                     sub.CancelReason = "Replaced by renewal";
-                    sub.FrozenAt = null;        
+                    sub.FrozenAt = null;
                     sub.FreezeEndsAt = null;
                 }
             }
@@ -90,7 +93,7 @@ namespace Gym_Core.Services
                 PlanId = dto.PlanId,
                 MemberId = dto.MemberId,
                 CreatedAt = DateTime.UtcNow,
-                CreatorId = creatorId,        
+                CreatorId = creatorId,
                 PaidAmount = ExistingPlan.Price,
                 StartDate = today,
                 EndDate = today.AddDays(ExistingPlan.DurationInDays!.Value - 1),
@@ -104,6 +107,9 @@ namespace Gym_Core.Services
 
             await unitOfWork.Subscriptions.AddAsync(Subscription);
             await unitOfWork.CompleteAsync();
+
+            logger.LogInformation("Subscription created for MemberId {MemberId} on PlanId {PlanId} by CreatorId {CreatorId}",
+                dto.MemberId, dto.PlanId, creatorId);
 
             return MapToResponse(Subscription);
         }
@@ -121,7 +127,7 @@ namespace Gym_Core.Services
             if (dto.RefundAmount < 0 || dto.RefundAmount > Existing.PaidAmount)
                 throw new BadRequestException("Refund amount must be between 0 and the paid amount.");
 
-            Existing.Status = SubscriptionStatus.Cancelled; 
+            Existing.Status = SubscriptionStatus.Cancelled;
             Existing.CancelledAt = DateTime.UtcNow;
             Existing.CancelReason = dto.Reason.Trim();
             Existing.RefundAmount = dto.RefundAmount;
@@ -129,6 +135,9 @@ namespace Gym_Core.Services
             Existing.FreezeEndsAt = null;
 
             await unitOfWork.CompleteAsync();
+
+            logger.LogInformation("Subscription {SubscriptionId} cancelled with refund {RefundAmount}",
+                id, dto.RefundAmount);
 
             return MapToResponse(Existing);
         }
@@ -139,8 +148,8 @@ namespace Gym_Core.Services
 
             var today = DateTime.UtcNow.Date;
 
-            var (subs, total) = await unitOfWork.Subscriptions.GetPagedAsync(page, s => IncludingExpired         
-                            || (s.EndDate >= today                             
+            var (subs, total) = await unitOfWork.Subscriptions.GetPagedAsync(page, s => IncludingExpired
+                            || (s.EndDate >= today
                             && (s.Plan.SessionsCount == 0 || s.SessionsRemaining > 0)), new[] { "Member", "Plan", "Creator" });
 
 
@@ -155,7 +164,7 @@ namespace Gym_Core.Services
 
         public async Task<SubscriptionResponseDto> GetByIdAsync(int id)
         {
-            var Existing = await unitOfWork.Subscriptions.GetAsync(s => s.Id == id, new[] { "Member", "Plan"});
+            var Existing = await unitOfWork.Subscriptions.GetAsync(s => s.Id == id, new[] { "Member", "Plan" });
 
             if (Existing is null)
                 throw new NotFoundException("This subscription was not found");
@@ -170,17 +179,17 @@ namespace Gym_Core.Services
             if (member == null)
                 throw new NotFoundException($"This member is not found");
 
-            var subs = await unitOfWork.Subscriptions.GetAllAsync(s => s.MemberId == memberId, new[] {"Member", "Plan"});
+            var subs = await unitOfWork.Subscriptions.GetAllAsync(s => s.MemberId == memberId, new[] { "Member", "Plan" });
 
             return subs
-                .OrderByDescending(s => s.StartDate)  
+                .OrderByDescending(s => s.StartDate)
                 .Select(MapToResponse)
                 .ToList();
         }
 
         public async Task<SubscriptionResponseDto> FreezeAsync(int Id, FreezeSubscriptionDTO dto)
         {
-            var subscription = await unitOfWork.Subscriptions.GetAsync(s => s.Id == Id, new[] {"Member", "Plan"});
+            var subscription = await unitOfWork.Subscriptions.GetAsync(s => s.Id == Id, new[] { "Member", "Plan" });
 
             if (subscription == null)
                 throw new NotFoundException("This subscription was not found");
@@ -201,12 +210,14 @@ namespace Gym_Core.Services
 
             await unitOfWork.CompleteAsync();
 
+            logger.LogInformation("Subscription {SubscriptionId} frozen for {Days} days", Id, dto.Days);
+
             return MapToResponse(subscription);
         }
 
         public async Task<SubscriptionResponseDto> UnFreezeAsync(int Id)
         {
-            var subscription = await unitOfWork.Subscriptions.GetAsync(s => s.Id == Id, new[] {"Member", "Plan"});
+            var subscription = await unitOfWork.Subscriptions.GetAsync(s => s.Id == Id, new[] { "Member", "Plan" });
 
             if (subscription is null)
                 throw new NotFoundException("This subscription was not found");
@@ -224,11 +235,13 @@ namespace Gym_Core.Services
             subscription.EndDate = subscription.EndDate.AddDays(actualDays);
 
             subscription.Status = SubscriptionStatus.Active;
-            subscription.TotalFrozenDays += actualDays; 
+            subscription.TotalFrozenDays += actualDays;
             subscription.FrozenAt = null;
             subscription.FreezeEndsAt = null;
 
             await unitOfWork.CompleteAsync();
+
+            logger.LogInformation("Subscription {SubscriptionId} unfrozen after {ActualDays} days", Id, actualDays);
 
             return MapToResponse(subscription);
         }
@@ -260,6 +273,8 @@ namespace Gym_Core.Services
             }
 
             await unitOfWork.CompleteAsync();
+
+            logger.LogInformation("Auto-unfroze {Count} expired frozen subscriptions", subscriptions.Count);
         }
 
         public async Task<RevenueDTO> GetRevenueAsync(DateTime from, DateTime to)

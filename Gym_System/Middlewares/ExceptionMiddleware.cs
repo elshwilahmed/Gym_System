@@ -31,6 +31,14 @@ namespace Gym_Core.Middlewares
             }
             catch (AppException e)
             {
+                logger.LogWarning(
+                    "AppException ({StatusCode}) on {Method} {Path} [TraceId: {TraceId}]: {Message}",
+                    e.StatusCode,
+                    context.Request.Method,
+                    context.Request.Path,
+                    context.TraceIdentifier,
+                    e.Message
+                );
                 context.Response.StatusCode = e.StatusCode;
                 await context.Response.WriteAsJsonAsync(new
                 {
@@ -40,7 +48,13 @@ namespace Gym_Core.Middlewares
             }
             catch (Exception e)
             {
-                logger.LogError(e, "Unhandled exception");
+                logger.LogError(
+                    e,
+                    "Unhandled exception on {Method} {Path} [TraceId: {TraceId}]",
+                    context.Request.Method,
+                    context.Request.Path,
+                    context.TraceIdentifier
+                );
                 context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                 await context.Response.WriteAsJsonAsync(new
                 {
